@@ -111,21 +111,11 @@ class Yandex_CF:
         start_score = (self.start_single * start_s + self.start_pair * start_p + self.start_all * start_a +
                        self.start_phrase * start_ph) * self.start_koef
 
-        self.positions = []
-        self.single_word_p = []
-        self.unk_mask = []
-
-        #full document
-        sscore = self.single_koef * self._get_single_score(doc)
-        pscore = self.pair_koef * self._get_pairs_score(doc)
-        ascore = self.all_koef * self._get_all_score()
-        phscore = self.phrase_koef * self._get_phrase_score(doc)
-
-        full_score = sscore + pscore + ascore + phscore
-
         #document title
         if len(titles) > 0:
             self.unk_mask = []
+            self.positions = []
+            self.single_word_p = []
             t_single_score = self.title_one * self._get_single_score(titles)
             if len(titles) > 1:
                 t_pair_score = self.title_pair * self._get_pairs_score(titles)
@@ -145,8 +135,16 @@ class Yandex_CF:
             t_phrase_score = 0.0
 
         self.positions = []
+        self.single_word_p = []
         self.unk_mask = []
-        self._get_single_score(doc)
+
+        # full document
+        sscore = self.single_koef * self._get_single_score(doc)
+        pscore = self.pair_koef * self._get_pairs_score(doc)
+        ascore = self.all_koef * self._get_all_score()
+        phscore = self.phrase_koef * self._get_phrase_score(doc)
+
+        full_score = sscore + pscore + ascore + phscore
 
         if len(self.positions) > 0:
             dscore = self._get_dist_score()
@@ -216,7 +214,7 @@ class Yandex_CF:
             koef = 0.03 ** num_unk
             score = 1.0
             for i in range(len(self.query_words)):
-                if not (self.unk_mask[i] == 1):
+                if self.unk_mask[i] == 0:
                     p = self.single_word_p[i]
                     score += np.log(p)
             score *= koef
